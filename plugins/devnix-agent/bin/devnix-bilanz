@@ -1,0 +1,110 @@
+#!/usr/bin/env bash
+# devnix-bilanz — Strichliste: werden die Werkzeuge wirklich benutzt?
+#
+# Aufruf:
+#   devnix-bilanz            letzte 7 Tage
+#   devnix-bilanz 30         letzte 30 Tage
+#   devnix-bilanz --heute    nur heute
+#   devnix-bilanz --kurz     eine Zeile (fuer den SessionStart-Hook)
+#   devnix-bilanz --roh      das rohe Protokoll
+set -uo pipefail
+
+LOG="${XDG_STATE_HOME:-$HOME/.local/state}/devnix/protokoll.tsv"
+SPERREN="${XDG_STATE_HOME:-$HOME/.local/state}/devnix/sperren.tsv"
+
+if [ ! -s "$LOG" ]; then
+  echo "Noch kein Protokoll unter $LOG."
+  echo "Es fuellt sich, sobald devnix-agent aktiv ist und Werkzeuge laufen."
+  exit 0
+fi
+
+TAGE=7; MODUS="normal"
+case "${1:-}" in
+  --kurz)  MODUS="kurz"; TAGE=7 ;;
+  --heute) TAGE=1 ;;
+  --roh)   tail -n 50 "$LOG"; exit 0 ;;
+  ''|*[!0-9]*) ;;
+  *) TAGE="$1" ;;
+esac
+
+SEIT=$(date -d "-${TAGE} days" +%Y-%m-%d 2>/dev/null || date +%Y-%m-%d)
+DATEN=$(awk -F'\t' -v seit="$SEIT" '$1 >= seit' "$LOG" 2>/dev/null)
+[ -z "$DATEN" ] && { echo "Keine Eintraege in den letzten $TAGE Tagen."; exit 0; }
+
+# awk END{print NR} statt wc -l: wc zaehlt Zeilenumbrueche, nicht Zeilen --
+# die letzte Zeile ohne abschliessendes \n fehlt sonst in jeder Summe.
+z() { printf '%s\n' "$DATEN" | awk -F'\t' -v k="$1" '$2==k{n++} END{print n+0}'; }
+
+RECH=$(z recherche);   LINT=$(z lint);       NACHW=$(z nachweis)
+SNIX=$(z schreiben-nix); SONST=$(z schreiben); COMMIT=$(z git-commit)
+PUSH=$(z git-push);    REBUILD=$(z rebuild);  SKILL=$(z skill)
+GESAMT=$(printf '%s\n' "$DATEN" | awk 'END{print NR}')
+SPERR=0
+[ -s "$SPERREN" ] && SPERR=$(awk -F'\t' -v seit="$SEIT" '$1 >= seit{n++} END{print n+0}' "$SPERREN" 2>/dev/null)
+
+# ── Die eine Zahl, auf die es ankommt ─────────────────────────────────────
+# Nix schreiben ohne vorher nachzuschlagen ist das Muster, das zu Behauptungen
+# aus dem Gedaechtnis fuehrt. Ein Verhaeltnis unter 1 heisst: mehr geschrieben
+# als geprueft.
+if [ "$SNIX" -gt 0 ]; then
+  QUOTE=$(awk -v r="$RECH" -v s="$SNIX" 'BEGIN{printf "%.1f", r/s}')
+else
+  QUOTE="n/a"
+fi
+
+if [ "$MODUS" = "kurz" ]; then
+  printf 'devNIX %sd: %s Recherchen · %s .nix geschrieben (Quote %s) · %s Lint · %s Nachweise · %s Sperren\n' \
+    "$TAGE" "$RECH" "$SNIX" "$QUOTE" "$LINT" "$NACHW" "$SPERR"
+  exit 0
+fi
+
+bar() { local n=$1 m=$2 w=24 f; [ "$m" -eq 0 ] && m=1
+        f=$(( n * w / m )); [ "$f" -gt "$w" ] && f=$w
+        printf '%*s' "$f" '' | tr ' ' '#'; printf '%*s' $((w-f)) ''; }
+
+MAX=$RECH
+for v in $LINT $NACHW $SNIX $SONST $COMMIT; do [ "$v" -gt "$MAX" ] && MAX=$v; done
+
+echo ""
+printf "┌─ devNIX Bilanz · letzte %s Tage %s┐\n" "$TAGE" \
+  "$(printf '%*s' $((25 - ${#TAGE})) '' | tr ' ' '-' | sed 's/-/─/g')"
+printf "│  %-12s %4s  %s   │\n" "Recherche"  "$RECH"   "$(bar $RECH $MAX)"
+printf "│  %-12s %4s  %s   │\n" "Nachweis"   "$NACHW"  "$(bar $NACHW $MAX)"
+printf "│  %-12s %4s  %s   │\n" "Lint"       "$LINT"   "$(bar $LINT $MAX)"
+printf "│  %-12s %4s  %s   │\n" ".nix schr." "$SNIX"   "$(bar $SNIX $MAX)"
+printf "│  %-12s %4s  %s   │\n" "sonst schr." "$SONST" "$(bar $SONST $MAX)"
+printf "│  %-12s %4s  %s   │\n" "Commits"    "$COMMIT" "$(bar $COMMIT $MAX)"
+printf "├%s┤\n" "$(printf '%*s' 56 '' | tr ' ' '-' | sed 's/-/─/g')"
+printf "│  Recherche je .nix-Schreibvorgang: %-19s │\n" "$QUOTE"
+printf "│  Rebuilds %-3s · Pushes %-3s · Skills %-3s · Sperren %-3s  │\n" \
+  "$REBUILD" "$PUSH" "$SKILL" "$SPERR"
+printf "│  Werkzeugaufrufe gesamt: %-29s │\n" "$GESAMT"
+printf "└%s┘\n" "$(printf '%*s' 56 '' | tr ' ' '-' | sed 's/-/─/g')"
+
+# ── Urteil, nicht nur Zahlen ──────────────────────────────────────────────
+echo ""
+if [ "$QUOTE" = "n/a" ]; then
+  echo "  Keine .nix-Dateien geschrieben — Quote nicht aussagekraeftig."
+elif awk -v q="$QUOTE" 'BEGIN{exit !(q < 0.5)}'; then
+  echo "  ⚠ Unter 0.5: es wurde deutlich mehr geschrieben als nachgeschlagen."
+  echo "    Das ist das Muster, aus dem Behauptungen aus dem Gedaechtnis entstehen."
+elif awk -v q="$QUOTE" 'BEGIN{exit !(q < 1.0)}'; then
+  echo "  Zwischen 0.5 und 1: brauchbar, aber es geht mehr."
+else
+  echo "  ✔ Ueber 1: es wurde mehr nachgeschlagen als geschrieben."
+fi
+
+if [ "$NACHW" -eq 0 ] && [ "$SNIX" -gt 0 ]; then
+  echo "  ⚠ Null Nachweise bei $SNIX Schreibvorgaengen — nichts wurde gegengeprueft."
+fi
+if [ "$SPERR" -gt 0 ]; then
+  echo "  $SPERR Sperre(n) haben gegriffen — 'devnix-bilanz --sperren' zeigt welche."
+fi
+
+# ── Was zuletzt gesperrt wurde ────────────────────────────────────────────
+if [ "${1:-}" = "--sperren" ] && [ -s "$SPERREN" ]; then
+  echo ""
+  echo "Zuletzt gesperrt:"
+  tail -n 10 "$SPERREN" | awk -F'\t' '{printf "  %s  %s\n", substr($1,1,19), $2}'
+fi
+echo ""

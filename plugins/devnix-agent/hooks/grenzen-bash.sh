@@ -16,7 +16,18 @@ INPUT=$(cat)
 CMD=$(printf '%s' "$INPUT" | jq -r '.tool_input.command // empty' 2>/dev/null)
 [ -z "$CMD" ] && exit 0
 
-deny() { echo "$1" >&2; exit 2; }
+# Sperren werden mitgeschrieben -- sonst weiss niemand, ob sie je greifen.
+# Eine Sperre, die nie ausloest, ist entweder ueberfluessig oder falsch
+# formuliert; beides sieht man nur an Zahlen.
+SPERRLOG="${XDG_STATE_HOME:-$HOME/.local/state}/devnix/sperren.tsv"
+mkdir -p "$(dirname "$SPERRLOG")" 2>/dev/null || true
+
+deny() {
+  printf '%s\t%s\n' "$(date -Iseconds)" "$(printf '%s' "$1" | head -1)" \
+    >> "$SPERRLOG" 2>/dev/null || true
+  echo "$1" >&2
+  exit 2
+}
 
 # ── Branchless: es gibt genau einen Branch ────────────────────────────────
 # Ausdrueckliche Ansage: "ich will branchless arbeiten, das ist zu viel
