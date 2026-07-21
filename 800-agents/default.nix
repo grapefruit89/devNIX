@@ -56,8 +56,23 @@ in
 
   config = lib.mkIf cfg.enable {
     # Nur dieses eine Paket freigeben, kein globales allowUnfree.
-    nixpkgs.config.allowUnfreePredicate =
-      pkg: builtins.elem (lib.getName pkg) (lib.optional cfg.claudeCode "claude-code");
+    #
+    # mkDefault ist hier PFLICHT, nicht Geschmack: allowUnfreePredicate ist ein
+    # einzelnes Attribut. Setzt der Betreiber es ebenfalls -- und das tut fast
+    # jeder, der irgendein unfreies Paket braucht -- kollidieren beide bei
+    # gleicher Prioritaet. Das NixOS-Modulsystem meldet dann einen Fehler, es
+    # gibt KEIN "letzter gewinnt".
+    #
+    # Mit mkDefault (Prioritaet 1000) gewinnt die Festlegung des Betreibers
+    # (100) sauber. Auf q958 ist das unfree.nix, die unrar UND claude-code
+    # freigibt.
+    #
+    # Die Assertion unten faengt den verbleibenden Fall ab: der Betreiber setzt
+    # ein eigenes Praedikat, das claude-code NICHT enthaelt. Dann schlaegt der
+    # Build sonst mit einer Meldung fehl, die nicht auf devNIX zeigt.
+    nixpkgs.config.allowUnfreePredicate = lib.mkDefault (
+      pkg: builtins.elem (lib.getName pkg) (lib.optional cfg.claudeCode "claude-code")
+    );
 
     environment.systemPackages =
       lib.optional cfg.claudeCode pkgs.claude-code
@@ -66,6 +81,23 @@ in
       ++ lib.optional (builtins.elem "github" cfg.mcpServer) pkgs.github-mcp-server;
 
     assertions = [
+      {
+        assertion =
+          !cfg.claudeCode || (config.nixpkgs.config.allowUnfreePredicate or (_: false)) pkgs.claude-code;
+        message = ''
+          devNix.agents.claudeCode ist an, aber claude-code ist nicht als unfree
+          freigegeben.
+
+          Das passiert, wenn die Host-Konfiguration ein eigenes
+          nixpkgs.config.allowUnfreePredicate setzt -- dieses gewinnt gegen
+          devNIX (mkDefault) und muss claude-code dann selbst enthalten:
+
+              nixpkgs.config.allowUnfreePredicate =
+                pkg: builtins.elem (lib.getName pkg) [ "claude-code" ];
+
+          Alternativ devNix.agents.claudeCode = false setzen.
+        '';
+      }
       {
         assertion = builtins.all (
           s:
