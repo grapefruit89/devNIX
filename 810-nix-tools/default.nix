@@ -67,7 +67,7 @@ in
     # Kurzbefehl fuer die vollstaendige Kette. Bewusst als Shell-Alias und
     # nicht als Skript: er soll im Repo-Verzeichnis laufen, das der Mensch
     # gerade offen hat -- ein Skript muesste den Pfad raten.
-    environment.shellAliases.nixcheck = lib.mkDefault (
+    environment.shellAliases.nixcheck = lib.mkOverride 900 (
       "NIXFILES=$(find . -name '*.nix' -not -path './.git/*') && "
       + "nixfmt $NIXFILES && "
       + "nixf-diagnose --ignore=sema-unused-def-lambda-noarg-formal $NIXFILES && "
