@@ -68,12 +68,12 @@ for v in $LINT $NACHW $SNIX $SONST $COMMIT; do [ "$v" -gt "$MAX" ] && MAX=$v; do
 echo ""
 printf "┌─ devNIX Bilanz · letzte %s Tage %s┐\n" "$TAGE" \
   "$(printf '%*s' $((25 - ${#TAGE})) '' | tr ' ' '-' | sed 's/-/─/g')"
-printf "│  %-12s %4s  %s   │\n" "Recherche"  "$RECH"   "$(bar $RECH $MAX)"
-printf "│  %-12s %4s  %s   │\n" "Nachweis"   "$NACHW"  "$(bar $NACHW $MAX)"
-printf "│  %-12s %4s  %s   │\n" "Lint"       "$LINT"   "$(bar $LINT $MAX)"
-printf "│  %-12s %4s  %s   │\n" ".nix schr." "$SNIX"   "$(bar $SNIX $MAX)"
-printf "│  %-12s %4s  %s   │\n" "sonst schr." "$SONST" "$(bar $SONST $MAX)"
-printf "│  %-12s %4s  %s   │\n" "Commits"    "$COMMIT" "$(bar $COMMIT $MAX)"
+printf "│  %-12s %4s  %s   │\n" "Recherche"  "$RECH"   "$(bar "$RECH" "$MAX")"
+printf "│  %-12s %4s  %s   │\n" "Nachweis"   "$NACHW"  "$(bar "$NACHW" "$MAX")"
+printf "│  %-12s %4s  %s   │\n" "Lint"       "$LINT"   "$(bar "$LINT" "$MAX")"
+printf "│  %-12s %4s  %s   │\n" ".nix schr." "$SNIX"   "$(bar "$SNIX" "$MAX")"
+printf "│  %-12s %4s  %s   │\n" "sonst schr." "$SONST" "$(bar "$SONST" "$MAX")"
+printf "│  %-12s %4s  %s   │\n" "Commits"    "$COMMIT" "$(bar "$COMMIT" "$MAX")"
 printf "├%s┤\n" "$(printf '%*s' 56 '' | tr ' ' '-' | sed 's/-/─/g')"
 printf "│  Recherche je .nix-Schreibvorgang: %-19s │\n" "$QUOTE"
 printf "│  Rebuilds %-3s · Pushes %-3s · Skills %-3s · Sperren %-3s  │\n" \

@@ -10,6 +10,11 @@
 #   statix          Stil-Vorschlaege. Community, NICHT in der nixpkgs-CI.
 #   deadnix         Toter Code. Community, NICHT in der nixpkgs-CI.
 #   noogle-search   lib.*- und builtins.*-Funktionen mit Signatur und Beispiel.
+#   shellcheck      Shell-Skripte. Gehoert hierher, obwohl es kein Nix-Werkzeug
+#                   ist: sobald ein Projekt Hooks oder Helfer mitliefert, ist
+#                   Shell Teil des Produkts. Am 2026-07-21 aufgefallen -- die
+#                   Nix-Dateien waren sauber, die Hook-Skripte ungeprueft.
+#   shfmt           Formatierung fuer Shell, das Gegenstueck zu nixfmt.
 #
 # NICHT nixfmt-rfc-style verwenden: seit 2025-07-14 nur noch ein Alias
 # ("is now the same as pkgs.nixfmt which should be used instead",
@@ -60,6 +65,8 @@ in
         statix
         deadnix
         noogle-search
+        shellcheck
+        shfmt
       ])
       ++ lib.optional (cfg.languageServer == "nixd") pkgs.nixd
       ++ lib.optional (cfg.languageServer == "nil") pkgs.nil;
@@ -72,7 +79,10 @@ in
       + "nixfmt $NIXFILES && "
       + "nixf-diagnose --ignore=sema-unused-def-lambda-noarg-formal $NIXFILES && "
       + "statix check . && "
-      + "deadnix --fail ."
+      + "deadnix --fail . && "
+      # Shell mitpruefen, wenn welche da ist. Ohne -r kein Fehler bei 0 Treffern.
+      + "{ SH=$(find . -name '*.sh' -not -path './.git/*'); "
+      + "[ -n \"$SH\" ] && shellcheck $SH || true; }"
     );
   };
 }
