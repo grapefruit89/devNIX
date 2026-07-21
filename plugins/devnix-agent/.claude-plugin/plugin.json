@@ -1,0 +1,10 @@
+{
+  "name": "devnix-agent",
+  "description": "Arbeitsweise fuer Nix-Projekte: Recherchepflicht vor jeder Aussage, Aenderung-mit-Nachweis, Ratschen statt Notizen. Bringt die Nix-MCPs mit und erzwingt die harten Grenzen per Hook statt per Bitte.",
+  "version": "0.1.0",
+  "author": {
+    "name": "grapefruit89"
+  },
+  "homepage": "https://github.com/grapefruit89/devNIX",
+  "license": "MIT"
+}
