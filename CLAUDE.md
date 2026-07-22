@@ -1,5 +1,12 @@
 # CLAUDE.md — devNIX
 
+> ## ⚖ ERSTES GEBOT — der Dezimalrahmen
+> Vier feste Anker regieren Ordner und Nummern **jedes** Projekts, auf jeder Ebene:
+> **`_0` Fundament · `_1` Zugang · `_2` Sicherheit · `_9` Leitplanken** — dazwischen
+> (`_3`–`_8`) die freie, projekteigene Mitte. Port = Nummer × 10, UID = 1000 + Nummer.
+> **Volle Autorität und Begründung: `devNIX/docs/adr/8000-dezimalrahmen.md`.**
+> Geht das verloren, verliert das Projekt die Orientierung. Niemals löschen.
+
 > ## ⚠ Die Verfassung des Nummernschemas
 > `docs/adr/8000-dezimalrahmen.md` regiert das Ordner- und Nummernschema **jedes**
 > Projekts (Nix-Grok, mediNix, devNIX, künftige). Vier feste Anker — `_0` Fundament,

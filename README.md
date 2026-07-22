@@ -1,3 +1,5 @@
+> ⚖ **Erstes Gebot:** das Nummernschema in [`docs/adr/8000-dezimalrahmen.md`](docs/adr/8000-dezimalrahmen.md) regiert jedes Projekt. Niemals löschen.
+
 # devNIX
 
 Werkzeuge **und** Arbeitsweise für die Nix-Entwicklung, in einem Repo.
