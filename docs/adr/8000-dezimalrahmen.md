@@ -82,58 +82,69 @@ Dienste.**
 
 ## Ableitungen — was aus der Nummer folgt
 
-Die Nummer ist die einzige Wahrheit. Alles, was sonst eine **willkürliche Zahl**
-wäre, wird aus ihr abgeleitet — jede Größe nach einer Regel, die zu ihrem
-Namensraum passt.
+Die Nummer ist die einzige Wahrheit. Alles Weitere wird aus ihr abgeleitet, und
+**alle Größen tragen die Projektziffer vorne** — man liest eine Zahl und weiß
+sofort das Projekt.
 
-| Größe | Regel | Beispiel `sonarr` (532) | Was die führende Stelle verrät |
+| Größe | Regel | `sonarr` (532) | Band |
 |---|---|---|---|
-| **Port** | Nummer × 10 | `5320` | Tausender = Projekt (`5` = media) |
-| **UID** | 1000 + Nummer | `1532` | `1` + Nummer, im User-Bereich |
-| **GID** | **Projekt × 1000** | `5000` | die geteilte Projekt-Gruppe |
+| **Port** | Nummer × 10 | `5320` | `5xx0` |
+| **UID** | Projekt × 1000 + Rest | `5032` | `50xx` |
+| **GID** | Projekt × 1000 | `5000` | `5000` |
 
-Port (`5320`) und GID (`5000`) tragen das Projekt **vorne**. Die UID (`1532`)
-muss die 1000-Grenze zum Systembereich überschreiten — daher `1` + Nummer statt
-Nummer voran. Alle drei enthalten die Nummer sichtbar; keine ist geraten.
+„Rest" = die zwei Ziffern nach der Projektziffer (Dekade + Dienst): aus `532`
+wird `32`. Alles an mediNix ist ein 5-er — Gruppe `5000`, Benutzer `50xx`, Ports
+`5xx0`. Bei devNIX `8000` / `80xx` / `8xx0`.
 
-### GID ist pro PROJEKT, nicht pro Dienst
+### GID und UID kollidieren nie — garantiert durch das erste Gebot
+
+Die GID ist `5000` (Projekt × 1000). Kann ein Benutzer je die `5000` bekommen?
+**Strukturell nein.** `5000` hieße „Rest = `00`", also Dekade 0, Dienst 0 — der
+Slot **`N00`**. Und `N00` ist nach dem ersten Gebot **niemals ein Programm**,
+sondern die Block-ID (das Fundament). Kein Dienst wohnt je auf `X00`, also
+bekommt kein Benutzer je die `X000`.
+
+Der niedrigste mögliche Rest ist `11` (Dekade 1, Dienst 1) → niedrigste UID
+`5011`. Die `5000` bleibt der Gruppe **exklusiv** — nicht durch Glück, sondern
+weil die Regel „im `_00` liegt nie ein Programm" es erzwingt. Die Verfassung
+schützt sich hier selbst.
+
+### GID ist pro PROJEKT, UID pro Dienst
 
 ```
-mediNix  (Namensraum 5)  →  GID 5000    alle Dienste teilen sie
-devNIX   (Namensraum 8)  →  GID 8000
-documents (Namensraum 4) →  GID 4000
+mediNix (Namensraum 5)  →  GID 5000    alle Dienste teilen sie
+devNIX  (Namensraum 8)  →  GID 8000
 ```
 
 Der Sinn: **gemeinsamer Dateizugriff innerhalb eines Projekts** — bei mediNix die
-Medien-Bibliothek. Deshalb `Projekt × 1000` und nicht `1000 + Nummer`: eine
-eigene GID pro Dienst würde jeden isolieren, und Jellyfin könnte Sonarrs Dateien
-nicht lesen (`Permission denied`). Das ist der klassische Docker-PUID/PGID-Fehler
-in Nix-Form.
+Medien-Bibliothek. Deshalb ist die GID projektweit *geteilt* (eine `5000` für
+alle), die UID aber pro Dienst *einzeln* (`5011`, `5032`, …) für
+Prozess-Isolation. Sie führen dieselbe Ziffer, sind aber **nie dieselbe Zahl** —
+eine eigene GID pro Dienst wäre der klassische Docker-PUID/PGID-Fehler
+(`Permission denied` beim Bibliothekszugriff).
 
-`5 × 1000 = 5000` validiert im Nachhinein die GID, die mediNix schon trägt — sie
-war nie willkürlich, sondern der Namensraum × 1000.
+### Warum diese drei Transformationen
 
-### Warum drei Regeln und nicht eine
+Die Projektziffer führt überall, aber die *Transformation* richtet sich nach den
+Grenzen des Zielraums:
 
-Weil jeder Namensraum eigene Grenzen hat:
+- **Port** (`× 10`): muss 1024–65535 sein → jedes Projekt landet in seinem
+  eigenen Tausender-Band (`5xxx`, `8xxx`), nie privilegiert.
+- **UID** (`× 1000 + Rest`): muss > 1000 sein (sonst Systembereich) → `50xx`
+  liegt sicher darüber, dicht über der Gruppe.
+- **GID** (`× 1000`): projektweit geteilt, oberhalb des System-Automaten
+  (400–999 abwärts).
 
-- **Ports** müssen 1024–65535 sein → Nummer × 10 legt jedes Projekt in sein
-  eigenes Tausender-Band (media 5xxx, devNIX 8xxx). Nie privilegiert, nie kollidierend.
-- **UIDs** müssen > 1000 sein, sonst Systembereich → 1000 + Nummer.
-- **GIDs** sind projektweit geteilt → Projekt × 1000, oberhalb des
-  System-Automaten (400–999 abwärts) und der abgeleiteten UIDs.
-
-Eine einzige Formel würde eine dieser Grenzen verletzen. Isomorphie heißt hier
-**nicht** „alle Zahlen gleich", sondern: *alles aus der einen Nummer, jede Größe
-passend transformiert*. Das ist **sinnvolle Isomorphie** — ableiten, wo eine Zahl
-willkürlich wäre, aber die Grenzen des Zielraums achten. (ADR-5042.)
+Isomorphie heißt **nicht** „alle Zahlen gleich", sondern: *alles aus der einen
+Nummer, jede Größe passend transformiert, alle mit derselben führenden Ziffer.*
+Das ist **sinnvolle Isomorphie** (ADR-5042).
 
 ### Unix-Sockets — vorerst nicht vergeben
 
 Falls je gebraucht: `/run/{projekt}/{nummer}.sock`. Derzeit unterstützt **kein**
-Dienst HTTP-über-Unix-Socket (auf q958 geprüft: die *arr binden ausschließlich
-TCP, `bindaddress` ist eine IP, kein Pfad). Also keine Socket-Ableitung — die
-Regel steht bereit, wird aber nicht angewandt, bis ein Dienst sie braucht.
+Dienst HTTP-über-Unix-Socket (auf q958 geprüft: die *arr binden nur TCP,
+`bindaddress` ist eine IP). Die Regel steht bereit, wird aber nicht angewandt,
+bis ein Dienst sie braucht.
 
 ## Das System-Root folgt dem Rahmen bereits
 
