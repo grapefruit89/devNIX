@@ -1,5 +1,11 @@
 # CLAUDE.md — devNIX
 
+> ## ⚠ Die Verfassung des Nummernschemas
+> `docs/adr/8000-dezimalrahmen.md` regiert das Ordner- und Nummernschema **jedes**
+> Projekts (Nix-Grok, mediNix, devNIX, künftige). Vier feste Anker — `_0` Fundament,
+> `_1` Zugang, `_2` Sicherheit, `_9` Leitplanken —, freie Mitte `_3`–`_8`.
+> **Niemals löschen.** Bei jeder Struktur-Frage zuerst dort nachsehen.
+
 Werkzeugsammlung als NixOS-Modul, plus das Plugin, das die Arbeitsweise erzwingt.
 Dieses Repo beschreibt **wie gearbeitet wird**. Es ist damit die einzige Stelle,
 an der ein Fehler sich auf alle anderen Projekte überträgt — entsprechend

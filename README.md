@@ -12,6 +12,11 @@ Es sind zwei Hälften, und keine kann die andere ersetzen:
 
 ---
 
+
+> **Nummernschema:** Die projektübergreifende Konvention (vier Anker, fraktal)
+> steht in [`docs/adr/8000-dezimalrahmen.md`](docs/adr/8000-dezimalrahmen.md) — die
+> Verfassung, die Nix-Grok, mediNix und devNIX gemeinsam regiert.
+
 ## Installieren
 
 **Die Werkzeuge** — in deiner `flake.nix`:
