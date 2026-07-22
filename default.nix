@@ -1,3 +1,9 @@
+# ---
+# id: "devNix"
+# maintainers: ["grapefruit89"]
+# license: MIT
+# homepage: "https://github.com/grapefruit89/devNIX"
+# ---
 # devNIX -- Sammelmodul.
 #
 # Bindet alle Ordner mit dreistelliger Nummer automatisch ein. Ein neuer
