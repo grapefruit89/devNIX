@@ -40,7 +40,13 @@ Innerhalb einer Dekade: **`N0` = Block-ID, `N1`–`N9` = Dienste** (ADR-5042).
 1. Welcher Anker oder welche Domäne? `_0`/`_1`/`_2`/`_9` sind fest, `_3`–`_8` frei.
 2. Ist die Ebene schon 3-stellig (graduiert) oder noch flach?
 3. Nächste freie Nummer in der Dekade, keine Lücken.
-4. Port = Nummer × 10, UID = 1000 + Nummer (ADR-5042). GID ist fix, nicht abgeleitet.
+4. **Ableitungen** aus der Nummer:
+   - Port = Nummer × 10   (532 → 5320)
+   - UID  = 1000 + Nummer (532 → 1532)
+   - GID  = **Projekt × 1000** — pro PROJEKT geteilt, nicht pro Dienst
+            (mediNix 5 → 5000, devNIX 8 → 8000)
+   Drei Regeln, weil jeder Namensraum eigene Grenzen hat. Sinnvolle Isomorphie:
+   alles aus der einen Nummer, jede Groesse passend transformiert.
 
 ## Was verworfen wurde — nicht erneut vorschlagen
 
