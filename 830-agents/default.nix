@@ -15,6 +15,25 @@
 }:
 let
   cfg = config.devNix.agents;
+
+  # Das effektive allowUnfree-Praedikat -- entpackt, damit es AUFRUFBAR ist.
+  #
+  # nixpkgs.config ist ein Freiform-Attrset (Typ "nixpkgs config") und loest
+  # verschachtelte mkDefault/mkForce-Prioritaeten NICHT auf. Liest man
+  # config.nixpkgs.config.allowUnfreePredicate zurueck, kommt der rohe
+  # Override-Wrapper ({ _type; content; priority }) statt der Funktion --
+  # empirisch bestaetigt. Ruft man den als Funktion auf, bricht die Evaluation.
+  #
+  # Diese Helferin schaelt den Wrapper ab: ist der Wert schon eine Funktion
+  # (z. B. der Betreiber hat ein eigenes, unwrapped Praedikat gesetzt), nimmt
+  # sie ihn direkt; sonst greift sie auf `.content` zu (das, was mkDefault
+  # umhuellt). So prueft die Assertion unten das WIRKLICH wirksame Praedikat --
+  # auch den Fall, dass die Host-Konfiguration devNIX ueberschrieben hat.
+  effektivesPredicate =
+    let
+      raw = config.nixpkgs.config.allowUnfreePredicate or (_: false);
+    in
+    if builtins.isFunction raw then raw else raw.content or (_: false);
 in
 {
   options.devNix.agents = {
@@ -82,8 +101,7 @@ in
 
     assertions = [
       {
-        assertion =
-          !cfg.claudeCode || (config.nixpkgs.config.allowUnfreePredicate or (_: false)) pkgs.claude-code;
+        assertion = !cfg.claudeCode || effektivesPredicate pkgs.claude-code;
         message = ''
           devNix.agents.claudeCode ist an, aber claude-code ist nicht als unfree
           freigegeben.
