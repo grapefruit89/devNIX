@@ -15,6 +15,9 @@
 #                   Shell Teil des Produkts. Am 2026-07-21 aufgefallen -- die
 #                   Nix-Dateien waren sauber, die Hook-Skripte ungeprueft.
 #   shfmt           Formatierung fuer Shell, das Gegenstueck zu nixfmt.
+#   nixoscope       Visualisiert Modul-Abhaengigkeiten (Graph). Fuer
+#                   Architektur und Aufraeumen, nicht fuer den Betrieb.
+#   treefmt         Ein Befehl fuer mehrere Formatter (Nix, Shell, ...).
 #
 # NICHT nixfmt-rfc-style verwenden: seit 2025-07-14 nur noch ein Alias
 # ("is now the same as pkgs.nixfmt which should be used instead",
@@ -65,6 +68,8 @@ in
         statix
         deadnix
         noogle-search
+        nixoscope
+        treefmt
         shellcheck
         shfmt
       ])

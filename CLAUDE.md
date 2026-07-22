@@ -18,6 +18,29 @@ Dieses Repo beschreibt **wie gearbeitet wird**. Es ist damit die einzige Stelle,
 an der ein Fehler sich auf alle anderen Projekte überträgt — entsprechend
 vorsichtig.
 
+
+## Struktur nach ADR-8000 (Dezimalrahmen)
+
+devNIX folgt seiner eigenen Verfassung — vier Anker, freie Mitte:
+
+```
+800  Fundament    flake.nix, default.nix, CLAUDE.md, docs/, README   (_0, Wissen, kein Ordner)
+810  Zugang       — leer, reserviert (devNIX hat keinen Ingress)      (_1)
+820  Sicherheit   — leer, reserviert (age/sops erst bei Bedarf)       (_2)
+830  agents       claude-code · mcp-nixos · context7-mcp · github     Domäne
+840  nix-tools    nixfmt · nixf-diagnose · statix · deadnix · noogle · shellcheck · shfmt · nixd · nixoscope · treefmt
+850  deps         nix-tree · nix-diff · nix-du                        Domäne
+860  build        nix-output-monitor · comma · nh                     Domäne
+870  shell        jq · gh · rg · fd · bat · eza · btop · dust · duf   Domäne
+890  Leitplanken  plugins/devnix-agent — die Hooks setzen durch       (_9)
+```
+
+`800` (Fundament) und `810`/`820` (Zugang/Sicherheit) sind **keine Ordner** —
+Fundament ist die Wurzel (Wissen), die anderen leer und reserviert. Ein leerer
+Anker ist kein Fehler (ADR-8000). Das Plugin unter `plugins/` ist konzeptionell
+`_9` Leitplanken; es bleibt bei `plugins/`, weil der Marketplace diesen Pfad
+erwartet.
+
 ## Du führst aus
 
 Du läufst auf einer Maschine mit Nix. Prüfe selbst, statt Prüfungen
