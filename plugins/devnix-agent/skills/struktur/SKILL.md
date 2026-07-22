@@ -42,7 +42,7 @@ Innerhalb einer Dekade: **`N0` = Block-ID, `N1`–`N9` = Dienste** (ADR-5042).
 3. Nächste freie Nummer in der Dekade, keine Lücken.
 4. **Ableitungen** aus der Nummer:
    - Port = Nummer × 10   (532 → 5320)
-   - UID  = Projekt × 1000 + Rest (532 → 5032; Rest = Dekade+Dienst)
+   - UID  = Nummer × 10 (532 → 5320; Rest = Dekade+Dienst)
    - GID  = **Projekt × 1000** — pro PROJEKT geteilt, nicht pro Dienst
             (mediNix 5 → 5000, devNIX 8 → 8000)
    Drei Regeln, weil jeder Namensraum eigene Grenzen hat. Sinnvolle Isomorphie:

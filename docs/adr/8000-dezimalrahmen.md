@@ -88,22 +88,22 @@ sofort das Projekt.
 | Größe | Regel | `sonarr` (532) | Band |
 |---|---|---|---|
 | **Port** | Nummer × 10 | `5320` | `5xx0` |
-| **UID** | Projekt × 1000 + Rest | `5032` | `50xx` |
+| **UID** | Nummer × 10 (= Port) | `5320` | `5xx0` |
 | **GID** | Projekt × 1000 | `5000` | `5000` |
 
 „Rest" = die zwei Ziffern nach der Projektziffer (Dekade + Dienst): aus `532`
-wird `32`. Alles an mediNix ist ein 5-er — Gruppe `5000`, Benutzer `50xx`, Ports
+wird `32`. Alles an mediNix ist ein 5-er — Gruppe `5000`, Benutzer `5xx0`, Ports
 `5xx0`. Bei devNIX `8000` / `80xx` / `8xx0`.
 
 **GID ist pro Projekt, UID pro Dienst.** Die Gruppe ist *geteilt* (alle Dienste
 in `5000`, damit Jellyfin Sonarrs Dateien liest), die UID *einzeln* (`5011`,
-`5032`, …) für Prozess-Isolation. Dieselbe führende Ziffer, aber **nie dieselbe
+`5320`, …) für Prozess-Isolation. Dieselbe führende Ziffer, aber **nie dieselbe
 Zahl** — eine eigene GID pro Dienst wäre der Docker-PUID/PGID-Fehler
 (`Permission denied`).
 
 **Drei Transformationen, weil jeder Zielraum eigene Grenzen hat:** Ports müssen
 1024–65535 sein (`× 10` legt jedes Projekt in sein Tausender-Band, nie
-privilegiert); UIDs müssen `> 1000` sein (`× 1000 + Rest` liegt sicher darüber);
+privilegiert); UIDs müssen `> 1000` sein (`Nummer × 10` liegt mit ≥ 5110 sicher darüber);
 GIDs sind projektweit geteilt (`× 1000`, oberhalb des System-Automaten 400–999).
 Isomorphie heißt **nicht** „alle Zahlen gleich", sondern: *alles aus der einen
 Nummer, jede Größe passend transformiert, alle mit derselben führenden Ziffer.*
@@ -175,10 +175,9 @@ Wer mediNix kennt, liest das ohne Anleitung.
 | **Drei Anker** (Sicherheit als Domäne) | Sicherheit kehrt in jedem Projekt wieder → fester Slot wie Fundament/Zugang |
 | **Sicherheit auf `_1`** | `_1` ist überall „Zugang"; bräche die Isomorphie |
 | **`_9` = Sicherheit statt Leitplanken** | `20-security` (Mechanik) und `90-policy` (Assertions) sind zwei Dinge; `_2` Mechanik, `_9` Verfassung |
-| **UID = Port** (Nummer × 10) | Verwechslung; UID lebt bei Datei-Eigentum, Port im Netz — getrennt gehalten |
-| **UID = 1000 + Nummer** | Führte mit `1` statt der Projektziffer; `× 1000 + Rest` ist durchgängig |
+| **UID = 1000 + Nummer** | Führte mit `1` statt der Projektziffer; `Nummer × 10` ist durchgängig |
 | **GID pro Dienst** (isomorph) | Zerstört den gemeinsamen Bibliothekszugriff — `Permission denied` |
-| **Verschachtelte Ordner** `510/511-x.nix` | Bricht den flachen Auto-Import und zerlegt funktionierende Fabriken |
+| ~~Verschachtelte Ordner~~ | **Adoptiert (2026-07-22):** Auto-Import ist jetzt rekursiv — das Dekaden-`default.nix` (`5N0`-Block-ID) sammelt die `5NN`-Dienste. Fabriken bleiben unberührt |
 | **`_0` mit Dienst-Code füllen** | `_0` ist Wissen; Dienste in die Mitte |
 
 ---
